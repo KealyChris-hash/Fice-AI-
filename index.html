@@ -218,7 +218,6 @@ button {
 </form>
 
 <script>
-
 const form = document.getElementById("form");
 const input = document.getElementById("input");
 const chat = document.getElementById("chat");
@@ -229,8 +228,7 @@ function ask(text) {
   form.requestSubmit();
 }
 
-form.addEventListener("submit", function(event) {
-
+form.addEventListener("submit", async function(event) {
   event.preventDefault();
 
   const text = input.value.trim();
@@ -243,21 +241,36 @@ form.addEventListener("submit", function(event) {
 
   input.value = "";
 
-  setTimeout(function() {
-    addMessage(
-      "Fice is ready. The next step is connecting this website to your AI backend.",
-      "ai"
-    );
-  }, 500);
+  const thinking = addMessage("Thinking...", "ai");
 
+  try {
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        message: text
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.reply) {
+      thinking.textContent = data.reply;
+    } else {
+      thinking.textContent = "Fice couldn't generate a response.";
+    }
+
+  } catch (error) {
+    thinking.textContent = "Fice couldn't connect to the AI.";
+  }
 });
 
 function addMessage(text, type) {
-
   const message = document.createElement("div");
 
   message.className = "message " + type;
-
   message.textContent = text;
 
   chat.appendChild(message);
@@ -266,9 +279,7 @@ function addMessage(text, type) {
     top: document.body.scrollHeight,
     behavior: "smooth"
   });
+
+  return message;
 }
-
 </script>
-
-</body>
-</html>
